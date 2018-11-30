@@ -119,6 +119,7 @@ export default {
       if (key.includes('.')) { // handle dot-notation keys ('.')
         const split = key.split('.')
         const [ first, remainder ] = [ split[0], split.slice(1).join('.') ]
+        if (!(first in model)) this.$set(model, first, {})
         return this.setValue(remainder, value, model[first])
       }
       this.$set(model, key, value)
@@ -169,7 +170,7 @@ export default {
       // deep merge component validations
       Object.keys(this.componentValidations).forEach(key => {
         if (key in eachFieldValue) {
-          eachFieldValue[key] = {...eachFieldValue[key], ...this.componentValidations[key]} // deep merge
+          eachFieldValue[key] = { ...eachFieldValue[key], ...this.componentValidations[key] } // deep merge
         } else {
           eachFieldValue[key] = this.componentValidations[key]
         }
@@ -178,19 +179,7 @@ export default {
       return eachFieldValue
     },
     emitExternalValidations () {
-      // debounce to avoid emit storm,
-      // delay to allow internal form field to update before building external validations
-      if (this.emitExternalValidationsTimeout) clearTimeout(this.emitExternalValidationsTimeout)
-      this.emitExternalValidationsTimeout = setTimeout(() => {
-        this.$emit('validations', this.getExternalValidations())
-        this.$nextTick(() => {
-          if (this.validation && this.validation.$dirty) {
-            this.validation.$touch()
-          }
-          // force DOM update
-          this.$forceUpdate()
-        })
-      }, 300)
+      this.$emit('validations', this.getExternalValidations())
     },
     getClass (row, field) {
       let c = ['px-0'] // always remove padding
